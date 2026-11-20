@@ -1,0 +1,6 @@
+{
+  "name": "STEM STUDY - Academic Hub & Collaboration Platform",
+  "description": "Production-ready academic resource ecosystem for STEM students, featuring secure authentication, RBAC (Student, Tutor, Admin), real-time cloud data syncing, peer study groups, and comprehensive audit logging.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

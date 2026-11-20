@@ -1,0 +1,38 @@
+/* UZ / eMhare-inspired navy and gold palette. */
+@theme {
+  --color-slate-50: #f5f8fc;
+  --color-slate-100: #e8eef5;
+  --color-slate-200: #d3deea;
+  --color-slate-300: #bccbdd;
+  --color-slate-400: #96a8be;
+  --color-slate-500: #7287a0;
+  --color-slate-600: #526982;
+  --color-slate-700: #3a5270;
+  --color-slate-800: #243c5a;
+  --color-slate-900: #142c47;
+  --color-slate-950: #0a1a2e;
+
+  --color-indigo-50: #fff9e8;
+  --color-indigo-100: #fff0c4;
+  --color-indigo-200: #f9e29a;
+  --color-indigo-300: #f0cf70;
+  --color-indigo-400: #d8ae45;
+  --color-indigo-500: #936b15;
+  --color-indigo-600: #8a6412;
+  --color-indigo-700: #76530f;
+  --color-indigo-800: #243c5a;
+  --color-indigo-900: #142c47;
+  --color-indigo-950: #0a1a2e;
+
+  --color-amber-50: #fff9e8;
+  --color-amber-100: #fff0c4;
+  --color-amber-200: #f9e29a;
+  --color-amber-300: #f0cf70;
+  --color-amber-400: #d8ae45;
+  --color-amber-500: #936b15;
+  --color-amber-600: #8a6412;
+  --color-amber-700: #76530f;
+  --color-amber-800: #5b4110;
+  --color-amber-900: #40300f;
+  --color-amber-950: #2b220e;
+}

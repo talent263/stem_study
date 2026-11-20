@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function hasUserProfile() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function currentUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email != null &&
+          request.auth.token.email in ['talentnechaz@gmail.com', 'Talentnechaz@gmail.com'])
+      );
+    }
+
+    function isTutorOrAdmin() {
+      return isAdmin() || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'TUTOR'
+      );
+    }
+
+    // Connection test document
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Admins collection
+    match /admins/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        isValidId(userId) &&
+        incoming().id == userId &&
+        incoming().name is string && incoming().name.size() <= 100 &&
+        incoming().role == (isAdmin() ? 'ADMIN' : 'STUDENT');
+      allow update: if isValidId(userId) && (
+        (isSignedIn() && request.auth.uid == userId &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'institution', 'department', 'avatarUrl', 'updatedAt'])) ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Academic Resources collection
+    match /resources/{resourceId} {
+      allow get, list: if true;
+      allow create: if hasUserProfile() && incoming().authorId == request.auth.uid &&
+        (isAdmin() || incoming().authorRole == currentUserRole()) &&
+        (isTutorOrAdmin() || incoming().status == 'pending') &&
+        isValidId(resourceId) &&
+        incoming().id == resourceId &&
+        incoming().title is string && incoming().title.size() <= 200 &&
+        incoming().courseCode is string && incoming().courseCode.size() <= 30 &&
+        incoming().department is string && incoming().department.size() <= 100 &&
+        incoming().status in ['pending', 'verified', 'rejected'];
+
+      allow update: if isSignedIn() && isValidId(resourceId) && (
+        // Author updating their own resource content
+        (existing().authorId == request.auth.uid &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'courseCode', 'department', 'level', 'resourceType', 'tags', 'content', 'fileUrl', 'updatedAt'])) ||
+        // Tutor/Admin verification
+        (isTutorOrAdmin() &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'verificationNotes', 'verifiedBy', 'verifiedAt', 'updatedAt'])) ||
+        // Download and rating counters
+        incoming().diff(existing()).affectedKeys().hasOnly(['downloadsCount', 'ratingAvg', 'ratingCount', 'updatedAt']) ||
+        isAdmin()
+      );
+
+      allow delete: if isSignedIn() &&
+        (isTutorOrAdmin() || existing().authorId == request.auth.uid);
+
+      // Nested Comments subcollection
+      match /comments/{commentId} {
+        allow get, list: if true;
+        allow create: if hasUserProfile() && request.auth.uid == incoming().authorId &&
+          (isAdmin() || incoming().authorRole == currentUserRole()) &&
+          isValidId(commentId) &&
+          incoming().resourceId == resourceId &&
+          incoming().text is string && incoming().text.size() <= 2000;
+        allow update: if isSignedIn() && request.auth.uid == existing().authorId &&
+          isValidId(commentId) && incoming().diff(existing()).affectedKeys().hasOnly(['text', 'updatedAt']);
+        allow delete: if isSignedIn() &&
+          (request.auth.uid == existing().authorId || isAdmin());
+      }
+    }
+
+    // Centralized AuditLog collection
+    match /auditLogs/{auditId} {
+      allow get, list: if isTutorOrAdmin();
+      allow create: if hasUserProfile() && request.auth.uid == incoming().userId &&
+        (isAdmin() || incoming().userRole == currentUserRole()) &&
+        isValidId(auditId) &&
+        incoming().action is string && incoming().action.size() <= 80 &&
+        incoming().target is string && incoming().target.size() <= 200;
+      allow update: if false; // Audit logs are strictly immutable
+      allow delete: if isAdmin();
+    }
+
+    // Study Groups collection
+    match /studyGroups/{groupId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.auth.uid == incoming().creatorId &&
+        isTutorOrAdmin() && isValidId(groupId) &&
+        incoming().title is string && incoming().title.size() <= 150;
+      allow update: if isSignedIn() && isValidId(groupId) && (
+        ((request.auth.uid == existing().creatorId || isTutorOrAdmin()) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'courseCode', 'department', 'description', 'meetingSchedule', 'topics', 'isPublic', 'updatedAt'])) ||
+        incoming().diff(existing()).affectedKeys().hasOnly(['memberCount', 'updatedAt']) ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() &&
+        (isAdmin() || request.auth.uid == existing().creatorId);
+
+      // Nested Group Messages
+      match /messages/{messageId} {
+        allow get, list: if true;
+        allow create: if hasUserProfile() && request.auth.uid == incoming().senderId &&
+          (isAdmin() || incoming().senderRole == currentUserRole()) &&
+          isValidId(messageId) &&
+          incoming().groupId == groupId &&
+          incoming().text is string && incoming().text.size() <= 2000;
+        allow update: if false;
+        allow delete: if isSignedIn() &&
+          (isAdmin() || request.auth.uid == existing().senderId);
+      }
+    }
+  }
+}

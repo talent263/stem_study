@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access control (Student, Tutor, Admin).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["STUDENT", "TUTOR", "ADMIN"] },
+        "institution": { "type": "string", "maxLength": 120 },
+        "department": { "type": "string", "maxLength": 100 },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "AdminDoc": {
+      "title": "AdminDoc",
+      "description": "Admin verification marker document.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "maxLength": 150 },
+        "grantedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email"]
+    },
+    "Resource": {
+      "title": "Resource",
+      "description": "Academic STEM learning resource or past exam paper.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "courseCode": { "type": "string", "maxLength": 20 },
+        "department": { "type": "string", "maxLength": 100 },
+        "level": { "type": "string", "enum": ["Year 1", "Year 2", "Year 3", "Year 4", "Postgraduate"] },
+        "resourceType": { "type": "string", "enum": ["Past Paper", "Lecture Notes", "Lab Manual", "Tutorial & Solutions", "Code Snippet", "Revision Guide"] },
+        "tags": { "type": "array" },
+        "content": { "type": "string", "maxLength": 20000 },
+        "fileUrl": { "type": "string", "maxLength": 1000 },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorRole": { "type": "string", "enum": ["STUDENT", "TUTOR", "ADMIN"] },
+        "status": { "type": "string", "enum": ["pending", "verified", "rejected"] },
+        "verificationNotes": { "type": "string", "maxLength": 1000 },
+        "verifiedBy": { "type": "string", "maxLength": 100 },
+        "verifiedAt": { "type": "string", "format": "date-time" },
+        "downloadsCount": { "type": "number" },
+        "ratingAvg": { "type": "number" },
+        "ratingCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "courseCode", "department", "resourceType", "authorId", "authorName", "status"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Discussion or peer question attached to a resource.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "resourceId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorRole": { "type": "string", "enum": ["STUDENT", "TUTOR", "ADMIN"] },
+        "text": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "resourceId", "authorId", "authorName", "text"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "System event audit trail for tracking user activity and administrative oversight.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string", "maxLength": 100 },
+        "userRole": { "type": "string", "enum": ["STUDENT", "TUTOR", "ADMIN"] },
+        "action": { "type": "string", "maxLength": 80 },
+        "target": { "type": "string", "maxLength": 200 },
+        "metadata": { "type": "string", "maxLength": 1000 },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "userName", "action", "target"]
+    },
+    "StudyGroup": {
+      "title": "StudyGroup",
+      "description": "Collaborative peer study group for STEM modules.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "maxLength": 150 },
+        "courseCode": { "type": "string", "maxLength": 20 },
+        "department": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 1500 },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string", "maxLength": 100 },
+        "memberCount": { "type": "number" },
+        "maxMembers": { "type": "number" },
+        "meetingSchedule": { "type": "string", "maxLength": 200 },
+        "topics": { "type": "string", "maxLength": 500 },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "courseCode", "department", "creatorId", "creatorName"]
+    },
+    "GroupMessage": {
+      "title": "GroupMessage",
+      "description": "Real-time message inside a peer study group room.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string", "maxLength": 100 },
+        "senderRole": { "type": "string", "enum": ["STUDENT", "TUTOR", "ADMIN"] },
+        "text": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "groupId", "senderId", "senderName", "text"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profiles with RBAC information"
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "AdminDoc" },
+      "description": "Admin access control verification collection"
+    },
+    "/resources/{resourceId}": {
+      "schema": { "$ref": "Resource" },
+      "description": "Academic resources repository"
+    },
+    "/resources/{resourceId}/comments/{commentId}": {
+      "schema": { "$ref": "Comment" },
+      "description": "Discussion comments on resources"
+    },
+    "/auditLogs/{auditId}": {
+      "schema": { "$ref": "AuditLog" },
+      "description": "Centralized immutable audit log ledger"
+    },
+    "/studyGroups/{groupId}": {
+      "schema": { "$ref": "StudyGroup" },
+      "description": "Peer collaborative study groups"
+    },
+    "/studyGroups/{groupId}/messages/{messageId}": {
+      "schema": { "$ref": "GroupMessage" },
+      "description": "Real-time chat messages within study groups"
+    }
+  }
+}
